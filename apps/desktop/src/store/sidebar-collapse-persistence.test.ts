@@ -61,4 +61,36 @@ describe('sidebar collapse persistence', () => {
     s2.bind()
     expect(s2.leftCollapsed()).toBe(true)
   })
+
+  it('restores a minimized Sessions zone when the sidebar toggle still reads open', async () => {
+    const s = await loadStores()
+    const { findGroupOfPane, group, split } = await import('@/components/pane-shell/tree/model')
+    s.tree.declareDefaultTree(split('row', [group(['sessions']), group(['workspace'])], [1, 3]))
+    s.bind()
+
+    const sessions = findGroupOfPane(s.tree.$layoutTree.get()!, 'sessions')!
+    s.tree.setTreeGroupMinimized(sessions.id, true) // titlebar zone-chevron click
+
+    expect(s.layout.$sidebarOpen.get()).toBe(true)
+    expect(findGroupOfPane(s.tree.$layoutTree.get()!, 'sessions')?.minimized).toBe(true)
+
+    s.layout.toggleSidebarOpen()
+
+    expect(s.layout.$sidebarOpen.get()).toBe(true)
+    expect(findGroupOfPane(s.tree.$layoutTree.get()!, 'sessions')?.minimized).toBe(false)
+  })
+
+  it('still hides the sidebar when a visible sibling tab is active', async () => {
+    const s = await loadStores()
+    const { group, split } = await import('@/components/pane-shell/tree/model')
+    s.tree.declareDefaultTree(
+      split('row', [group(['sessions', 'hermes-bots:pane'], { active: 'hermes-bots:pane' }), group(['workspace'])], [1, 3])
+    )
+    s.bind()
+
+    s.layout.toggleSidebarOpen()
+
+    expect(s.layout.$sidebarOpen.get()).toBe(false)
+    expect(s.leftCollapsed()).toBe(true)
+  })
 })

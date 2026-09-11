@@ -1673,6 +1673,11 @@ function paneGroup(paneId: string) {
   return tree ? findGroupOfPane(tree, paneId) : null
 }
 
+/** Whether the zone containing `paneId` is minimized to its rail/header. */
+export function isPaneZoneMinimized(paneId: string): boolean {
+  return Boolean(paneGroup(paneId)?.minimized)
+}
+
 /** Collapse/restore a pane's ZONE to a minimized rail — its tab stays visible.
  *  Store-driven (one-way): a tool panel's $open store mirrors here via
  *  bindPaneCollapse, so a toggle collapses rather than hides. */

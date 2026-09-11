@@ -2,7 +2,7 @@ import { atom, computed, type ReadableAtom, type WritableAtom } from 'nanostores
 
 import { SIDEBAR_COLLAPSE_MEDIA_QUERY } from '@/app/layout-constants'
 import { PANE_TOGGLE_REVEAL_EVENT } from '@/components/pane-shell'
-import { isPaneVisible, revealTreePane } from '@/components/pane-shell/tree/store'
+import { isPaneVisible, isPaneZoneMinimized, revealTreePane } from '@/components/pane-shell/tree/store'
 import { matchesQuery } from '@/hooks/use-media-query'
 import { connectionScopedAtom } from '@/lib/connection-scoped'
 import { type Codec, Codecs, persistentAtom } from '@/lib/persisted'
@@ -534,6 +534,18 @@ export function setSidebarOpen(open: boolean) {
 
 export function toggleSidebarOpen() {
   if (!revealNarrowPane(CHAT_SIDEBAR_PANE_ID, 'toggle')) {
+    // The zone chevron minimizes the Sessions group without changing the
+    // side's persisted open flag. In that state the titlebar still says
+    // "Hide sidebar", so blindly toggling the flag hides an already invisible
+    // zone and Cmd+B / the titlebar button appear dead even after a restart.
+    // Treat an open-but-not-visible Sessions pane as a reveal request first:
+    // un-minimize its group while preserving the user's persisted side choice.
+    if ($sidebarOpen.get() && isPaneZoneMinimized('sessions')) {
+      revealTreePane('sessions')
+
+      return
+    }
+
     togglePane(CHAT_SIDEBAR_PANE_ID)
   }
 }
